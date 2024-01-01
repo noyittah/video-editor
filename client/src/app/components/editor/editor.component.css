@@ -1,0 +1,60 @@
+.editor-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px;
+
+    .scenes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .title {
+            font-weight: bold;
+        }
+
+        .scene {
+            display: flex;
+            background-color: rgb(193, 183, 183);
+            width: 550px;
+            height: 50px;
+            border-radius: 5px;
+            padding: 5px 20px;
+            gap: 450px;
+            
+            .scene-container {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                justify-content: center;
+        
+                .scene-duration {
+                    font-size: 12px;
+                }
+            }
+            
+            img {
+                height: 30px;
+                width: 30px;
+                align-self: center;
+                cursor: pointer;
+            }
+        }
+
+    }
+
+    .video-preview {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .title {
+            font-weight: bold;
+        }
+
+        .video {
+            width: 550px;
+            border: 1px solid #0a0a0a;
+            border-radius: 5px;
+        }
+    }
+}

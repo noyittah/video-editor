@@ -1,0 +1,71 @@
+.track-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    .track-header {
+        background-color: white;
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 10px;
+
+        .zoom-container {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+
+            img {
+                cursor: pointer;
+                height: 25px;
+                width: 25px;
+            }
+        }
+
+        .play-btn {
+            background-color: black;
+            color: white;
+            border: 1px solid black;
+            height: 25px;
+            width: 10%;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    }
+
+    .ruler {
+        background-color: black;
+        color: white;
+        display: flex;
+        padding: 5px;   
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+
+        .ruler-marker {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+    }
+
+    .scene-container {
+        background-color: rgb(238, 189, 28);
+        display: flex;
+        flex-grow: 1;
+        overflow: auto;
+        padding: 40px 5px;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        gap: 3px;
+
+        .scene {
+            background-color: rgb(193, 183, 183);
+            height: 40px;
+            border-radius: 3px;
+            font-weight: bold;
+            text-align: center;
+        }
+    }
+}

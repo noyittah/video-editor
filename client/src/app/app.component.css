@@ -1,0 +1,18 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .header {
+        height: 10%;
+    }
+
+    .body{
+        height: 70%;
+    }
+
+    .track {
+        height: 20%;
+        padding: 20px;
+    }
+}

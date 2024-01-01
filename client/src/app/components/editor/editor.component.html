@@ -1,0 +1,19 @@
+<div class="editor-container">
+    <div class="scenes-list" cdkDropList (cdkDropListDropped)="drop($event)">
+        <span class="title"> All Scenes </span>
+        <div class="scene" *ngFor="let scene of scenes" (click)="onPlay(scene)" cdkDrag (cdkDragStarted)="dragStart(scene)">
+            <div class="scene-container">
+              <span class="scene-name">{{ scene.name }}</span>
+              <span class="scene-duration">Duration: {{ scene.duration }}s</span>
+            </div>
+            <img [src]="scene.isPlay ? 'assets/images/pause.png' : 'assets/images/play.png'" alt="Icon">
+          </div>
+    </div>
+    <div class="video-preview">
+        <span class="title"> Preview </span>
+        <video id="videoPlayer" class="video" controls>
+            <source [src]="selectedScene$.value?.url" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+    </div>
+</div>
