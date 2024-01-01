@@ -67,5 +67,11 @@
             font-weight: bold;
             text-align: center;
         }
+
+        .remove-btn {
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
     }
 }

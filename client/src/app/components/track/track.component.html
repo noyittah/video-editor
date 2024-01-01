@@ -1,11 +1,13 @@
 <div class="track-container">
     <div class="track-header">
         <div class="zoom-container">
-            <img src="assets/images/zoom_in.png" (click)="onClickZoomIn()" alt="Icon">
-            <img src="assets/images/zoom_out.png" (click)="onClickZoomOut()" alt="Icon">
+          <img src="assets/images/zoom_in.png" (click)="onClickZoomIn()" alt="Icon">
+          <img src="assets/images/zoom_out.png" (click)="onClickZoomOut()" alt="Icon">
         </div>
-            <button class="play-btn" (click)="onClickPlayBtn()">Play</button>
-    </div>
+        <button class="play-btn" (click)="onClickPlayBtn()">
+          {{ isPlaying ? 'Pause' : 'Play' }}
+        </button>
+      </div>
     <div class="ruler">
         <div class="ruler-marker" *ngFor="let marker of rulerMarkers">
             {{ marker }}
@@ -14,6 +16,7 @@
     <div *ngIf="draggedScene" class="scene-container" cdkDropList (cdkDropListDropped)="drop($event)">
         <div *ngFor="let scene of scenes" class="scene" cdkDrag [style.width]="calculateWidth(scene)">
             {{ scene?.name }}
+            <img src="assets/images/remove.png" class="remove-btn"  (click)="removeSceneFromTrack(scene)" alt="Icon">
         </div>
     </div>
     <div *ngIf="!draggedScene" class="scene-container">

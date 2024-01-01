@@ -1,25 +1,32 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SceneService } from '../../services/scene.service';
 import { TOTAL_DURATION } from '../../constants';
 import { VideoEditorService } from '../../services/video-editor.service';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
+import { PlayService } from '../../services/play.service';
 
 @Component({
   selector: 'app-track',
   templateUrl: './track.component.html',
   styleUrls: ['./track.component.css']
 })
-export class TrackComponent implements OnInit {
+
+export class TrackComponent implements OnInit, OnDestroy {
   scenes: any[] = [];
   rulerMarkers: number[] = [];
   draggedScene: any;
   totalScenesDuration: number = 0;
   shouldPlayMergedVideo: boolean = false;
   markersGap: number = 1;
+  isPlaying: boolean = false;
+
+  private destroy$ = new Subject<void>();
+  private playOrder$ = new BehaviorSubject<number[]>([]);
 
   constructor(
     private sceneService: SceneService,
-    private videoEditorService: VideoEditorService,
+    private playService: PlayService
   ) {}
 
   ngOnInit(): void {
@@ -33,7 +40,49 @@ export class TrackComponent implements OnInit {
         }
       }
     });
+    this.playOrder$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((order) => {
+      this.playScenesInOrder(order);
+    });
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private waitForVideoEnd(videoElement: HTMLMediaElement): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const onEnded = () => {
+        resolve();
+        videoElement.removeEventListener('ended', onEnded);
+      };
+
+      videoElement.addEventListener('ended', onEnded);
+    });
+  }
+
+  private playScenesInOrder(order: number[]): void {
+    const videoElement = document.querySelector('.video') as HTMLMediaElement;
+    let currentIndex = 0;
+  
+    const playNextScene = () => {
+      if (currentIndex < order.length) {
+        const scene = this.scenes[order[currentIndex]];
+        videoElement.src = scene.url;
+        videoElement.currentTime = 0;
+        videoElement.play();
+        currentIndex++;
+  
+        this.waitForVideoEnd(videoElement).then(() => {
+          playNextScene();
+        });
+      }
+    };
+    playNextScene();
+  }
+  
   private generateRulerMarkers(): void {
     this.rulerMarkers = [];
     for (let i = 1; i <= TOTAL_DURATION; i += this.markersGap) {
@@ -61,15 +110,30 @@ export class TrackComponent implements OnInit {
   }
 
   drop(event: CdkDragDrop<string[]>): void {
+    const order = this.scenes.map((_, index) => index);
+    this.playOrder$.next(order);
     moveItemInArray(this.scenes, event.previousIndex, event.currentIndex);
   }
 
-  async onClickPlayBtn(): Promise<void> {
-    const inputFiles = this.scenes.map((scene) => scene.url).filter((url) => !!url);
+  async onClickPlayBtn(){
+    const videoElement = document.querySelector('.video') as HTMLMediaElement;
 
-    if (inputFiles.length === 0) {
-      console.error('No valid video files found.');
-      return;
+    if (!this.isPlaying) {
+      this.isPlaying = true;
+      this.playScenesInOrder(this.scenes.map((_, i) => i));
+      videoElement.play();
+    } else {
+      this.isPlaying = false;
+      videoElement.pause();
+    }
+  }
+
+  removeSceneFromTrack(scene: any): void {
+    const index = this.scenes.indexOf(scene);
+    if (index !== -1) {
+      this.scenes.splice(index, 1);
+      this.totalScenesDuration -= scene.duration;
+      const order = this.scenes.map((_, i) => i);
     }
   }
 }
