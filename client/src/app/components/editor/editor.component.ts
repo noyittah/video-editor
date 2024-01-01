@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
-import { SCENES, TOTAL_DURATION } from '../../constants';
+import { SCENES } from '../../constants';
 import { BehaviorSubject } from 'rxjs';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { SceneService } from '../../services/scene.service';
+import { SceneType } from '../../models/scene.interface';
 
 @Component({
   selector: 'app-editor',
@@ -10,54 +11,56 @@ import { SceneService } from '../../services/scene.service';
   styleUrl: './editor.component.css'
 })
 export class EditorComponent {
-  draggedScene: any;
+  draggedScene: SceneType = null;
 
   constructor(
     private sceneService: SceneService) {
     this.selectedScene.next(this.scenes[0]);
   }
 
-  scenes: any[] = SCENES;
+  scenes: SceneType[] = SCENES;
   private selectedScene: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
   get selectedScene$(): BehaviorSubject<any> {
     return this.selectedScene;
   }
 
-  onPlay(scene: any): void {
+  onPlay(scene: SceneType): void {
     const videoElement = document.querySelector('.video') as HTMLMediaElement;
   
-    if (scene !== this.selectedScene.value || !scene.isPlay) {
-      if (this.selectedScene.value) {
-        this.selectedScene.value.isPlay = false;
-      }
-      scene.isPlay = true;
-      this.selectedScene.next(scene);
-      videoElement.src = scene.url;
-      videoElement.currentTime = scene.currentTime || 0;
-      videoElement.play();
-  
-      videoElement.addEventListener('ended', () => {
-        scene.isPlay = false;
+    if (scene !== null) {
+      if (scene !== this.selectedScene.value || !scene.isPlay) {
+        if (this.selectedScene.value) {
+          this.selectedScene.value.isPlay = false;
+        }
+        scene.isPlay = true;
         this.selectedScene.next(scene);
-      });
-  
-      videoElement.addEventListener('play', () => {
-        this.selectedScene.value.isPlay = true;
-      });
-  
-      videoElement.addEventListener('pause', () => {
-        this.selectedScene.value.isPlay = false;
-      });
-    } else {
-      scene.isPlay = !scene.isPlay;
-      this.selectedScene.next(scene);
-  
-      if (scene.isPlay) {
+        videoElement.src = scene.url;
+        videoElement.currentTime = scene.currentTime || 0;
         videoElement.play();
+    
+        videoElement.addEventListener('ended', () => {
+          scene.isPlay = false;
+          this.selectedScene.next(scene);
+        });
+    
+        videoElement.addEventListener('play', () => {
+          this.selectedScene.value.isPlay = true;
+        });
+    
+        videoElement.addEventListener('pause', () => {
+          this.selectedScene.value.isPlay = false;
+        });
       } else {
-        scene.currentTime = videoElement.currentTime;
-        videoElement.pause();
+        scene.isPlay = !scene.isPlay;
+        this.selectedScene.next(scene);
+    
+        if (scene.isPlay) {
+          videoElement.play();
+        } else {
+          scene.currentTime = videoElement.currentTime;
+          videoElement.pause();
+        }
       }
     }
   }
@@ -66,12 +69,10 @@ export class EditorComponent {
     if (this.draggedScene) {
       this.scenes.push(this.draggedScene);
       this.sceneService.setDraggedScene(null);
-    } else {
-      moveItemInArray(this.scenes, event.previousIndex, event.currentIndex);
     }
   }
 
-  dragStart(scene: any): void { 
+  dragStart(scene: SceneType): void { 
     this.sceneService.setDraggedScene(scene);
   }
 }

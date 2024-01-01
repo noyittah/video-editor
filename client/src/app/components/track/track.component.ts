@@ -2,9 +2,8 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SceneService } from '../../services/scene.service';
 import { TOTAL_DURATION } from '../../constants';
-import { VideoEditorService } from '../../services/video-editor.service';
-import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
-import { PlayService } from '../../services/play.service';
+import { BehaviorSubject, Observable, Subject, fromEvent, interval, takeUntil } from 'rxjs';
+import { SceneType } from '../../models/scene.interface';
 
 @Component({
   selector: 'app-track',
@@ -13,20 +12,22 @@ import { PlayService } from '../../services/play.service';
 })
 
 export class TrackComponent implements OnInit, OnDestroy {
-  scenes: any[] = [];
+  scenes: SceneType[] = [];
+  secondsOfScenes: number = 0;
   rulerMarkers: number[] = [];
-  draggedScene: any;
+  draggedScene: SceneType = null;
   totalScenesDuration: number = 0;
   shouldPlayMergedVideo: boolean = false;
   markersGap: number = 1;
   isPlaying: boolean = false;
+  cursorPosition: number = 0;
+  startFromCursor: boolean = false;
 
   private destroy$ = new Subject<void>();
   private playOrder$ = new BehaviorSubject<number[]>([]);
 
   constructor(
     private sceneService: SceneService,
-    private playService: PlayService
   ) {}
 
   ngOnInit(): void {
@@ -47,42 +48,6 @@ export class TrackComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  private waitForVideoEnd(videoElement: HTMLMediaElement): Promise<void> {
-    return new Promise<void>((resolve) => {
-      const onEnded = () => {
-        resolve();
-        videoElement.removeEventListener('ended', onEnded);
-      };
-
-      videoElement.addEventListener('ended', onEnded);
-    });
-  }
-
-  private playScenesInOrder(order: number[]): void {
-    const videoElement = document.querySelector('.video') as HTMLMediaElement;
-    let currentIndex = 0;
-  
-    const playNextScene = () => {
-      if (currentIndex < order.length) {
-        const scene = this.scenes[order[currentIndex]];
-        videoElement.src = scene.url;
-        videoElement.currentTime = 0;
-        videoElement.play();
-        currentIndex++;
-  
-        this.waitForVideoEnd(videoElement).then(() => {
-          playNextScene();
-        });
-      }
-    };
-    playNextScene();
-  }
-  
   private generateRulerMarkers(): void {
     this.rulerMarkers = [];
     for (let i = 1; i <= TOTAL_DURATION; i += this.markersGap) {
@@ -90,8 +55,11 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
 
-  calculateWidth(scene: any): string {
-    const percent = (scene?.duration / TOTAL_DURATION) * 100;
+  calculateWidth(scene: SceneType): string {
+    let percent;
+    if (scene !== null) {
+      percent = (scene?.duration / TOTAL_DURATION) * 100;
+    }
     return percent + '%';
   }
 
@@ -115,12 +83,25 @@ export class TrackComponent implements OnInit, OnDestroy {
     moveItemInArray(this.scenes, event.previousIndex, event.currentIndex);
   }
 
+  removeSceneFromTrack(scene: SceneType): void {
+    if (scene !== null) {
+      const index = this.scenes.indexOf(scene);
+      if (index !== -1) {
+        this.scenes.splice(index, 1);
+        this.totalScenesDuration -= scene?.duration;
+        const order = this.scenes.map((_, i) => i);
+      }
+    }
+  }
+
   async onClickPlayBtn(){
     const videoElement = document.querySelector('.video') as HTMLMediaElement;
 
     if (!this.isPlaying) {
       this.isPlaying = true;
+      this.startFromCursor = true;
       this.playScenesInOrder(this.scenes.map((_, i) => i));
+      videoElement.currentTime = this.cursorPosition;
       videoElement.play();
     } else {
       this.isPlaying = false;
@@ -128,12 +109,73 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
 
-  removeSceneFromTrack(scene: any): void {
-    const index = this.scenes.indexOf(scene);
-    if (index !== -1) {
-      this.scenes.splice(index, 1);
-      this.totalScenesDuration -= scene.duration;
-      const order = this.scenes.map((_, i) => i);
+  private playScenesInOrder(order: number[], startFromCursor: boolean = false): void {
+    const videoElement = document.querySelector('.video') as HTMLMediaElement;
+    let currentIndex = startFromCursor ? order.findIndex(i => i * this.markersGap > this.cursorPosition) : 0;
+  
+    const playNextScene = () => {
+      if (currentIndex < order.length) {
+        const scene = this.scenes[order[currentIndex]];
+        videoElement.src = scene?.url || '';
+
+        if (startFromCursor ) {
+          videoElement.currentTime = Math.max(this.cursorPosition - (scene?.startTime ?? 0), 0);
+        } else {
+          videoElement.currentTime = 0;
+        }
+
+        videoElement.play();
+        currentIndex++;
+  
+        this.waitForVideoEnd(videoElement).subscribe(() => {
+          playNextScene();
+        });
+      }
+      else {
+        this.isPlaying = false;
+      }
+    };
+    playNextScene();
+  }
+  
+  private waitForVideoEnd(videoElement: HTMLMediaElement): Observable<void> {
+    return new Observable<void>((observer) => {
+      const onEnded = () => {
+        observer.next();
+        observer.complete();
+        videoElement.removeEventListener('ended', onEnded);
+      };
+      videoElement.addEventListener('ended', onEnded);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onClickTrack(event: MouseEvent): void {
+    this.startFromCursor = true;
+    const trackElement = document.querySelector('.track-container') as HTMLElement;
+    const playButton = document.querySelector('.play-btn') as HTMLElement;
+    const videoElement = document.querySelector('.video') as HTMLMediaElement;
+  
+    if (playButton.contains(event.target as Node)) {
+      return;
+    }
+  
+    const clickX = event.clientX - trackElement.getBoundingClientRect().left;
+    const percent = (clickX / trackElement.clientWidth) * 100;
+    this.cursorPosition = (percent * TOTAL_DURATION) / 100;
+    this.cursorPosition = Math.max(0, Math.min(this.cursorPosition, TOTAL_DURATION));
+    videoElement.currentTime = this.cursorPosition;
+
+    if (this.isPlaying) {
+      videoElement.play().catch(error => {
+        console.error('Error playing video:', error);
+      });
+    } else {
+      videoElement.pause();
     }
   }
 }
