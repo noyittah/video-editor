@@ -1,4 +1,4 @@
-<div class="track-container">
+<div class="track-container" (click)="onClickTrack($event)">
     <div class="track-header">
         <div class="zoom-container">
           <img src="assets/images/zoom_in.png" (click)="onClickZoomIn()" alt="Icon">
@@ -24,3 +24,4 @@
     </div>
 </div>
 
+<div class="cursor" [style.left.%]="cursorPosition / 30 * 100" [hidden]="cursorPosition < 0.5 || cursorPosition > 30.5"></div>
