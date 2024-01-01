@@ -4,7 +4,7 @@
           <img src="assets/images/zoom_in.png" (click)="onClickZoomIn()" alt="Icon">
           <img src="assets/images/zoom_out.png" (click)="onClickZoomOut()" alt="Icon">
         </div>
-        <button class="play-btn" (click)="onClickPlayBtn()">
+        <button class="play-btn" (click)="onClickPlayBtn()" [disabled]="!scenes.length">
           {{ isPlaying ? 'Pause' : 'Play' }}
         </button>
       </div>
@@ -15,7 +15,7 @@
     </div>
     <div *ngIf="draggedScene" class="scene-container" cdkDropList (cdkDropListDropped)="drop($event)">
         <div *ngFor="let scene of scenes" class="scene" cdkDrag [style.width]="calculateWidth(scene)">
-            {{ scene?.name }}
+            <span>{{ scene?.name }}</span>
             <img src="assets/images/remove.png" class="remove-btn"  (click)="removeSceneFromTrack(scene)" alt="Icon">
         </div>
     </div>

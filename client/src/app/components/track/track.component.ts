@@ -4,7 +4,6 @@ import { SceneService } from '../../services/scene.service';
 import { TOTAL_DURATION } from '../../constants';
 import { VideoEditorService } from '../../services/video-editor.service';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
-import { PlayService } from '../../services/play.service';
 
 @Component({
   selector: 'app-track',
@@ -26,7 +25,6 @@ export class TrackComponent implements OnInit, OnDestroy {
 
   constructor(
     private sceneService: SceneService,
-    private playService: PlayService
   ) {}
 
   ngOnInit(): void {
@@ -47,42 +45,6 @@ export class TrackComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  private waitForVideoEnd(videoElement: HTMLMediaElement): Promise<void> {
-    return new Promise<void>((resolve) => {
-      const onEnded = () => {
-        resolve();
-        videoElement.removeEventListener('ended', onEnded);
-      };
-
-      videoElement.addEventListener('ended', onEnded);
-    });
-  }
-
-  private playScenesInOrder(order: number[]): void {
-    const videoElement = document.querySelector('.video') as HTMLMediaElement;
-    let currentIndex = 0;
-  
-    const playNextScene = () => {
-      if (currentIndex < order.length) {
-        const scene = this.scenes[order[currentIndex]];
-        videoElement.src = scene.url;
-        videoElement.currentTime = 0;
-        videoElement.play();
-        currentIndex++;
-  
-        this.waitForVideoEnd(videoElement).then(() => {
-          playNextScene();
-        });
-      }
-    };
-    playNextScene();
-  }
-  
   private generateRulerMarkers(): void {
     this.rulerMarkers = [];
     for (let i = 1; i <= TOTAL_DURATION; i += this.markersGap) {
@@ -115,6 +77,15 @@ export class TrackComponent implements OnInit, OnDestroy {
     moveItemInArray(this.scenes, event.previousIndex, event.currentIndex);
   }
 
+  removeSceneFromTrack(scene: any): void {
+    const index = this.scenes.indexOf(scene);
+    if (index !== -1) {
+      this.scenes.splice(index, 1);
+      this.totalScenesDuration -= scene.duration;
+      const order = this.scenes.map((_, i) => i);
+    }
+  }
+
   async onClickPlayBtn(){
     const videoElement = document.querySelector('.video') as HTMLMediaElement;
 
@@ -126,15 +97,45 @@ export class TrackComponent implements OnInit, OnDestroy {
       this.isPlaying = false;
       videoElement.pause();
     }
+
   }
 
-  removeSceneFromTrack(scene: any): void {
-    const index = this.scenes.indexOf(scene);
-    if (index !== -1) {
-      this.scenes.splice(index, 1);
-      this.totalScenesDuration -= scene.duration;
-      const order = this.scenes.map((_, i) => i);
-    }
+  private playScenesInOrder(order: number[]): void {
+    const videoElement = document.querySelector('.video') as HTMLMediaElement;
+    let currentIndex = 0;
+  
+    const playNextScene = () => {
+      if (currentIndex < order.length) {
+        const scene = this.scenes[order[currentIndex]];
+        videoElement.src = scene.url;
+        videoElement.currentTime = 0;
+        videoElement.play();
+        currentIndex++;
+  
+        this.waitForVideoEnd(videoElement).then(() => {
+          playNextScene();
+        });
+      }
+      else {
+        this.isPlaying = false;
+      }
+    };
+    playNextScene();
+  }
+  
+  private waitForVideoEnd(videoElement: HTMLMediaElement): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const onEnded = () => {
+        resolve();
+        videoElement.removeEventListener('ended', onEnded);
+      };
+      videoElement.addEventListener('ended', onEnded);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

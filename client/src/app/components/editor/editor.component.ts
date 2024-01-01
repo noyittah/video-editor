@@ -66,8 +66,6 @@ export class EditorComponent {
     if (this.draggedScene) {
       this.scenes.push(this.draggedScene);
       this.sceneService.setDraggedScene(null);
-    } else {
-      moveItemInArray(this.scenes, event.previousIndex, event.currentIndex);
     }
   }
 
