@@ -5,5 +5,8 @@ Run the following in your 'client' directory:
     - `ng serve`
 
 
-Uploading Screen Recording 2024-01-02 at 0.11.40.mov…
+
+
+https://github.com/noyittah/video-editor/assets/74644378/7e05e53c-a8aa-4526-b1ac-6e7c3dc850ef
+
 
