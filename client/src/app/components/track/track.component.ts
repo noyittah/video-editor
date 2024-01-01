@@ -2,7 +2,8 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SceneService } from '../../services/scene.service';
 import { TOTAL_DURATION } from '../../constants';
-import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, fromEvent, interval, takeUntil } from 'rxjs';
+import { SceneType } from '../../models/scene.interface';
 
 @Component({
   selector: 'app-track',
@@ -11,10 +12,10 @@ import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 })
 
 export class TrackComponent implements OnInit, OnDestroy {
-  scenes: any[] = [];
+  scenes: SceneType[] = [];
   secondsOfScenes: number = 0;
   rulerMarkers: number[] = [];
-  draggedScene: any;
+  draggedScene: SceneType = null;
   totalScenesDuration: number = 0;
   shouldPlayMergedVideo: boolean = false;
   markersGap: number = 1;
@@ -54,8 +55,11 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
 
-  calculateWidth(scene: any): string {
-    const percent = (scene?.duration / TOTAL_DURATION) * 100;
+  calculateWidth(scene: SceneType): string {
+    let percent;
+    if (scene !== null) {
+      percent = (scene?.duration / TOTAL_DURATION) * 100;
+    }
     return percent + '%';
   }
 
@@ -79,12 +83,14 @@ export class TrackComponent implements OnInit, OnDestroy {
     moveItemInArray(this.scenes, event.previousIndex, event.currentIndex);
   }
 
-  removeSceneFromTrack(scene: any): void {
-    const index = this.scenes.indexOf(scene);
-    if (index !== -1) {
-      this.scenes.splice(index, 1);
-      this.totalScenesDuration -= scene.duration;
-      const order = this.scenes.map((_, i) => i);
+  removeSceneFromTrack(scene: SceneType): void {
+    if (scene !== null) {
+      const index = this.scenes.indexOf(scene);
+      if (index !== -1) {
+        this.scenes.splice(index, 1);
+        this.totalScenesDuration -= scene?.duration;
+        const order = this.scenes.map((_, i) => i);
+      }
     }
   }
 
@@ -101,7 +107,6 @@ export class TrackComponent implements OnInit, OnDestroy {
       this.isPlaying = false;
       videoElement.pause();
     }
-
   }
 
   private playScenesInOrder(order: number[], startFromCursor: boolean = false): void {
@@ -111,10 +116,10 @@ export class TrackComponent implements OnInit, OnDestroy {
     const playNextScene = () => {
       if (currentIndex < order.length) {
         const scene = this.scenes[order[currentIndex]];
-        videoElement.src = scene?.url;
+        videoElement.src = scene?.url || '';
 
-        if (startFromCursor) {
-          videoElement.currentTime = Math.max(this.cursorPosition - scene?.startTime, 0);
+        if (startFromCursor ) {
+          videoElement.currentTime = Math.max(this.cursorPosition - (scene?.startTime ?? 0), 0);
         } else {
           videoElement.currentTime = 0;
         }
@@ -122,7 +127,7 @@ export class TrackComponent implements OnInit, OnDestroy {
         videoElement.play();
         currentIndex++;
   
-        this.waitForVideoEnd(videoElement).then(() => {
+        this.waitForVideoEnd(videoElement).subscribe(() => {
           playNextScene();
         });
       }
@@ -133,10 +138,11 @@ export class TrackComponent implements OnInit, OnDestroy {
     playNextScene();
   }
   
-  private waitForVideoEnd(videoElement: HTMLMediaElement): Promise<void> {
-    return new Promise<void>((resolve) => {
+  private waitForVideoEnd(videoElement: HTMLMediaElement): Observable<void> {
+    return new Observable<void>((observer) => {
       const onEnded = () => {
-        resolve();
+        observer.next();
+        observer.complete();
         videoElement.removeEventListener('ended', onEnded);
       };
       videoElement.addEventListener('ended', onEnded);
@@ -172,6 +178,5 @@ export class TrackComponent implements OnInit, OnDestroy {
       videoElement.pause();
     }
   }
-  
 }
 

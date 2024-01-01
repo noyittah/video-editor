@@ -5,13 +5,11 @@
           <img src="assets/images/zoom_out.png" (click)="onClickZoomOut()" alt="Icon">
         </div>
         <button class="play-btn" (click)="onClickPlayBtn()" [disabled]="!scenes.length">
-          {{ isPlaying ? 'Pause' : 'Play' }}
+          {{ isPlaying ? 'Pause' : 'Play Trcak' }}
         </button>
-      </div>
+    </div>
     <div class="ruler">
-        <div class="ruler-marker" *ngFor="let marker of rulerMarkers">
-            {{ marker }}
-        </div>
+        <div class="ruler-marker" *ngFor="let marker of rulerMarkers">{{ marker }}</div>
     </div>
     <div *ngIf="draggedScene" class="scene-container" cdkDropList (cdkDropListDropped)="drop($event)">
         <div *ngFor="let scene of scenes" class="scene" cdkDrag [style.width]="calculateWidth(scene)">
@@ -23,5 +21,4 @@
         Drop scenes here!
     </div>
 </div>
-
-<div class="cursor" [style.left.%]="cursorPosition / 30 * 100" [hidden]="cursorPosition < 0.5 || cursorPosition > 30.5"></div>
+<div class="cursor" *ngIf="scenes.length" [style.left.%]="cursorPosition / 30 * 100" [hidden]="cursorPosition < 0.5 || cursorPosition > 30.5"></div>

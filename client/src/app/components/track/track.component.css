@@ -81,5 +81,6 @@
     bottom: 15px;
     height: 120px;
     width: 2px;
-    background-color: red; /* Change color as needed */
+    background-color: red;
+    cursor: pointer;
 }
