@@ -2,7 +2,6 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SceneService } from '../../services/scene.service';
 import { TOTAL_DURATION } from '../../constants';
-import { VideoEditorService } from '../../services/video-editor.service';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -13,12 +12,15 @@ import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 
 export class TrackComponent implements OnInit, OnDestroy {
   scenes: any[] = [];
+  secondsOfScenes: number = 0;
   rulerMarkers: number[] = [];
   draggedScene: any;
   totalScenesDuration: number = 0;
   shouldPlayMergedVideo: boolean = false;
   markersGap: number = 1;
   isPlaying: boolean = false;
+  cursorPosition: number = 0;
+  startFromCursor: boolean = false;
 
   private destroy$ = new Subject<void>();
   private playOrder$ = new BehaviorSubject<number[]>([]);
@@ -91,7 +93,9 @@ export class TrackComponent implements OnInit, OnDestroy {
 
     if (!this.isPlaying) {
       this.isPlaying = true;
+      this.startFromCursor = true;
       this.playScenesInOrder(this.scenes.map((_, i) => i));
+      videoElement.currentTime = this.cursorPosition;
       videoElement.play();
     } else {
       this.isPlaying = false;
@@ -100,15 +104,21 @@ export class TrackComponent implements OnInit, OnDestroy {
 
   }
 
-  private playScenesInOrder(order: number[]): void {
+  private playScenesInOrder(order: number[], startFromCursor: boolean = false): void {
     const videoElement = document.querySelector('.video') as HTMLMediaElement;
-    let currentIndex = 0;
+    let currentIndex = startFromCursor ? order.findIndex(i => i * this.markersGap > this.cursorPosition) : 0;
   
     const playNextScene = () => {
       if (currentIndex < order.length) {
         const scene = this.scenes[order[currentIndex]];
-        videoElement.src = scene.url;
-        videoElement.currentTime = 0;
+        videoElement.src = scene?.url;
+
+        if (startFromCursor) {
+          videoElement.currentTime = Math.max(this.cursorPosition - scene?.startTime, 0);
+        } else {
+          videoElement.currentTime = 0;
+        }
+
         videoElement.play();
         currentIndex++;
   
@@ -137,5 +147,31 @@ export class TrackComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+  onClickTrack(event: MouseEvent): void {
+    this.startFromCursor = true;
+    const trackElement = document.querySelector('.track-container') as HTMLElement;
+    const playButton = document.querySelector('.play-btn') as HTMLElement;
+    const videoElement = document.querySelector('.video') as HTMLMediaElement;
+  
+    if (playButton.contains(event.target as Node)) {
+      return;
+    }
+  
+    const clickX = event.clientX - trackElement.getBoundingClientRect().left;
+    const percent = (clickX / trackElement.clientWidth) * 100;
+    this.cursorPosition = (percent * TOTAL_DURATION) / 100;
+    this.cursorPosition = Math.max(0, Math.min(this.cursorPosition, TOTAL_DURATION));
+    videoElement.currentTime = this.cursorPosition;
+
+    if (this.isPlaying) {
+      videoElement.play().catch(error => {
+        console.error('Error playing video:', error);
+      });
+    } else {
+      videoElement.pause();
+    }
+  }
+  
 }
 
