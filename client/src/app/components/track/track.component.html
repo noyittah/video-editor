@@ -21,4 +21,4 @@
         Drop scenes here!
     </div>
 </div>
-<div class="cursor" *ngIf="scenes.length" [style.left.%]="cursorPosition / 30 * 100" [hidden]="cursorPosition < 0.5 || cursorPosition > 30.5"></div>
+<div class="cursor" *ngIf="scenes.length" [style.left.%]="cursorPosition / totalDuration * 100" [hidden]="cursorPosition < 0.5 || cursorPosition > 30.5"></div>
