@@ -2,7 +2,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SceneService } from '../../services/scene.service';
 import { TOTAL_DURATION } from '../../constants';
-import { BehaviorSubject, Observable, Subject, fromEvent, interval, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { SceneType } from '../../models/scene.interface';
 
 @Component({
@@ -17,11 +17,11 @@ export class TrackComponent implements OnInit, OnDestroy {
   rulerMarkers: number[] = [];
   draggedScene: SceneType = null;
   totalScenesDuration: number = 0;
-  shouldPlayMergedVideo: boolean = false;
   markersGap: number = 1;
   isPlaying: boolean = false;
   cursorPosition: number = 0;
   startFromCursor: boolean = false;
+  totalDuration = TOTAL_DURATION;
 
   private destroy$ = new Subject<void>();
   private playOrder$ = new BehaviorSubject<number[]>([]);
@@ -89,7 +89,7 @@ export class TrackComponent implements OnInit, OnDestroy {
       if (index !== -1) {
         this.scenes.splice(index, 1);
         this.totalScenesDuration -= scene?.duration;
-        const order = this.scenes.map((_, i) => i);
+        // const order = this.scenes.map((_, i) => i);
       }
     }
   }
@@ -126,8 +126,8 @@ export class TrackComponent implements OnInit, OnDestroy {
 
         videoElement.play();
         currentIndex++;
-  
-        this.waitForVideoEnd(videoElement).subscribe(() => {
+        
+        videoElement.addEventListener('ended', () => {
           playNextScene();
         });
       }
@@ -136,22 +136,6 @@ export class TrackComponent implements OnInit, OnDestroy {
       }
     };
     playNextScene();
-  }
-  
-  private waitForVideoEnd(videoElement: HTMLMediaElement): Observable<void> {
-    return new Observable<void>((observer) => {
-      const onEnded = () => {
-        observer.next();
-        observer.complete();
-        videoElement.removeEventListener('ended', onEnded);
-      };
-      videoElement.addEventListener('ended', onEnded);
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   onClickTrack(event: MouseEvent): void {
@@ -177,6 +161,11 @@ export class TrackComponent implements OnInit, OnDestroy {
     } else {
       videoElement.pause();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

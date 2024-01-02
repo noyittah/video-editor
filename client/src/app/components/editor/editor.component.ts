@@ -11,15 +11,14 @@ import { SceneType } from '../../models/scene.interface';
   styleUrl: './editor.component.css'
 })
 export class EditorComponent {
+  private selectedScene: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   draggedScene: SceneType = null;
+  scenes: SceneType[] = SCENES;
 
   constructor(
     private sceneService: SceneService) {
     this.selectedScene.next(this.scenes[0]);
   }
-
-  scenes: SceneType[] = SCENES;
-  private selectedScene: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
   get selectedScene$(): BehaviorSubject<any> {
     return this.selectedScene;
@@ -72,7 +71,7 @@ export class EditorComponent {
     }
   }
 
-  dragStart(scene: SceneType): void { 
+  dragStart(scene: SceneType): void {
     this.sceneService.setDraggedScene(scene);
   }
 }
