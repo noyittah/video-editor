@@ -1,6 +1,6 @@
 
 # video-editor
-Run the following in your 'client' directory:<br>
+Run the following in 'client' directory:<br>
     - `npm install`<br>
     - `ng build`<br>
     - `ng serve`
