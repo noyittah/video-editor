@@ -45,13 +45,17 @@ export class EditorComponent {
         videoElement.currentTime = currentTime;
   
         videoElement.play();
-        videoElement.addEventListener('timeupdate', () => {
-          if (scene.newEndTime !== undefined && videoElement.currentTime >= scene.newEndTime) {
-            videoElement.pause();
-            scene.isPlay = false;
-            this.selectedScene.next(scene);
-          }
-        });
+        videoElement.addEventListener('seeking', () => {
+          const timeUpdateHandler = () => {
+              if (scene.newEndTime !== undefined && videoElement.currentTime >= scene.newEndTime) {
+                  videoElement.pause();
+                  scene.isPlay = false;
+                  this.selectedScene.next(scene);
+                  videoElement.removeEventListener('timeupdate', timeUpdateHandler);
+              }
+          };
+          videoElement.addEventListener('timeupdate', timeUpdateHandler);
+      });      
   
         videoElement.addEventListener('ended', () => {
           scene.isPlay = false;
