@@ -5,6 +5,7 @@ import { HeaderComponentComponent } from './components/header-component/header-c
 import { TrackComponent } from './components/track/track.component';
 import { EditorComponent } from './components/editor/editor.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
   ],
   imports: [
     BrowserModule,
-    DragDropModule
+    DragDropModule,
+    FormsModule
   ],
   bootstrap: [AppComponent],
 })

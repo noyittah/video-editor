@@ -3,10 +3,16 @@
       <span class="title"> All Scenes </span>
       <div class="scene" *ngFor="let scene of scenes" (click)="onPlay(scene)" cdkDrag (cdkDragStarted)="dragStart(scene)">
           <div class="scene-container">
-              <span class="scene-name">{{ scene?.name }}</span>
-              <span class="scene-duration">Duration: {{ scene?.duration }}s</span>
+              <div class="scene-description">
+                <span class="scene-name">{{ scene?.name }}</span>
+                <span class="scene-duration">Duration: {{ scene?.duration }}s</span>
+              </div>
+              <div class="input-container">
+                <input type="number" [(ngModel)]="scene!.newStartTime" placeholder="Start Time">
+                <input type="number" [(ngModel)]="scene!.newEndTime" placeholder="End Time">
+                <img [src]="scene?.isPlay ? 'assets/images/pause.png' : 'assets/images/play.png'" alt="Icon">
+             </div>
           </div>
-        <img [src]="scene?.isPlay ? 'assets/images/pause.png' : 'assets/images/play.png'" alt="Icon">
       </div>
   </div>
   <div class="video-preview">

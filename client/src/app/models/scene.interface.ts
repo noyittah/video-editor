@@ -4,6 +4,7 @@ export interface Scene {
     duration: number;
     isPlay: boolean;
     currentTime?: number;
-    startTime?: number;
+    newStartTime?: number;
+    newEndTime?: number; 
 }
 export type SceneType = Scene | null;

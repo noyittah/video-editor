@@ -94,15 +94,13 @@ export class TrackComponent implements OnInit, OnDestroy {
     }
   }
 
-  async onClickPlayBtn(){
+  async onClickPlayBtn() {
     const videoElement = document.querySelector('.video') as HTMLMediaElement;
-
     if (!this.isPlaying) {
       this.isPlaying = true;
       this.startFromCursor = true;
-      this.playScenesInOrder(this.scenes.map((_, i) => i));
-      videoElement.currentTime = this.cursorPosition;
       videoElement.play();
+      this.playScenesInOrder(this.scenes.map((_, i) => i));
     } else {
       this.isPlaying = false;
       videoElement.pause();
@@ -117,26 +115,27 @@ export class TrackComponent implements OnInit, OnDestroy {
       if (currentIndex < order.length) {
         const scene = this.scenes[order[currentIndex]];
         videoElement.src = scene?.url || '';
-
-        if (startFromCursor ) {
-          videoElement.currentTime = Math.max(this.cursorPosition - (scene?.startTime ?? 0), 0);
-        } else {
-          videoElement.currentTime = 0;
+        videoElement.addEventListener('seeking', () => {
+          videoElement.play();
+        });
+  
+        if (scene?.newStartTime) {
+          this.cursorPosition === 0 ? videoElement.currentTime = Math.max(scene.newStartTime, 0) :
+            videoElement.currentTime = Math.max(this.cursorPosition - scene.newStartTime, 0);
         }
-
-        videoElement.play();
-        currentIndex++;
-        
+  
         videoElement.addEventListener('ended', () => {
+          currentIndex++;
           playNextScene();
         });
-      }
-      else {
+      } else {
         this.isPlaying = false;
       }
     };
+  
     playNextScene();
   }
+  
 
   onClickTrack(event: MouseEvent): void {
     this.startFromCursor = true;

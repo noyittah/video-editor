@@ -23,12 +23,18 @@
             
             .scene-container {
                 display: flex;
-                flex-direction: column;
-                gap: 5px;
+                gap: 150px;
                 justify-content: center;
         
-                .scene-duration {
-                    font-size: 12px;
+                .scene-description {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    gap: 5px;
+
+                    .scene-duration {
+                        font-size: 12px;
+                    }
                 }
             }
             

@@ -28,32 +28,47 @@ export class EditorComponent {
     const videoElement = document.querySelector('.video') as HTMLMediaElement;
   
     if (scene !== null) {
+      if (scene.newStartTime !== undefined && scene.newEndTime !== undefined) {
+        scene.duration = scene.newEndTime - scene.newStartTime;
+      }
+  
       if (scene !== this.selectedScene.value || !scene.isPlay) {
         if (this.selectedScene.value) {
           this.selectedScene.value.isPlay = false;
         }
+  
         scene.isPlay = true;
         this.selectedScene.next(scene);
         videoElement.src = scene.url;
-        videoElement.currentTime = scene.currentTime || 0;
+  
+        const currentTime = scene.newStartTime !== undefined ? scene.newStartTime : scene.newStartTime || 0;
+        videoElement.currentTime = currentTime;
+  
         videoElement.play();
-    
+        videoElement.addEventListener('timeupdate', () => {
+          if (scene.newEndTime !== undefined && videoElement.currentTime >= scene.newEndTime) {
+            videoElement.pause();
+            scene.isPlay = false;
+            this.selectedScene.next(scene);
+          }
+        });
+  
         videoElement.addEventListener('ended', () => {
           scene.isPlay = false;
           this.selectedScene.next(scene);
         });
-    
+  
         videoElement.addEventListener('play', () => {
           this.selectedScene.value.isPlay = true;
         });
-    
+  
         videoElement.addEventListener('pause', () => {
           this.selectedScene.value.isPlay = false;
         });
       } else {
         scene.isPlay = !scene.isPlay;
         this.selectedScene.next(scene);
-    
+  
         if (scene.isPlay) {
           videoElement.play();
         } else {
